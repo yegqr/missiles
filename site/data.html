@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=Unbounded:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/s.css">
+<title>Дані — airalert</title>
+<meta name="description" content="Повне вивантаження бази: добові ознаки, видані прогнози, тривоги. CSV, сирі рядки, документація.">
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="mark" href="/">air<i>*</i>alert</a>
+  <nav><a href="/data.html" aria-current="page">Дані</a>
+       <a href="/why.html">Чому саме це число</a>
+       <a href="/methodology.html">Методологія</a></nav>
+</div></header>
+
+<main class="wrap">
+<section class="head">
+  <p class="kicker">01 — Дані</p>
+  <h1>Усе, на чому стоїть число</h1>
+  <p class="lead">База збирається з первинних джерел власними парсерами з 24 лютого
+  2022 року й оновлюється сама. Готові чужі датасети використані лише як
+  незалежна звірка, не як основа.</p>
+</section>
+
+<h2>Завантажити</h2>
+<div class="dls">
+  <a class="dl" href="/dl/daily_features.csv" download>
+    <b>daily_features.csv</b>
+    <span>Навчальна таблиця. Один рядок — одна доба нальоту. Колонки <code>*_prev</code>
+    — ознаки, <code>y_*</code> — те, що сталося.</span></a>
+  <a class="dl" href="/dl/predictions.csv" download>
+    <b>predictions.csv</b>
+    <span>Кожна видана оцінка з часом видачі, складом ансамблю й розміром
+    навчальної вибірки. Рядки, видані наживо, не перезаписуються; рядки з
+    <code>model=backtest_*</code> пораховані заднім числом і перебудовуються.</span></a>
+  <a class="dl" href="/dl/alerts_daily.csv" download>
+    <b>alerts_daily.csv</b>
+    <span>Добові агрегати тривог <b>тільки по місту Києву</b> з канонічного ряду:
+    кількість, хвилини, нічні хвилини. Доба, що триває, не включена.</span></a>
+  <a class="dl" href="/api/latest.json">
+    <b>latest.json</b>
+    <span>Те саме, що бачить сторінка: поточні оцінки, 400 діб історії й
+    покриття джерел. Перебудовується щочверть години.</span></a>
+</div>
+
+<h2>Сирі рядки як вони є</h2>
+<p class="small">Останні доби з <code>daily_features.csv</code>, без обробки.
+Прокручується вбік.</p>
+<div class="scroll"><table id="raw"><thead></thead><tbody></tbody></table></div>
+
+<h2>Звідки це береться</h2>
+<div class="scroll"><table>
+<thead><tr><th>Що</th><th>Джерело</th><th>Період</th><th>Повнота</th></tr></thead>
+<tbody>
+<tr><td>Тривоги м. Київ</td><td>реєстр КМДА <code>kyiv.digital</code></td><td>25.02.2022 →</td><td>повна</td></tr>
+<tr><td>Тривоги область і 7 районів</td><td>власний парсер <code>@air_alert_ua</code></td><td>15.03.2022 →</td><td>повна</td></tr>
+<tr><td>Зведення ПС, треки на Київ</td><td>власний парсер <code>@kpszsu</code></td><td>канал з 2019, придатна розмітка з 2024</td><td>79% зведень розібрано</td></tr>
+<tr><td>Зльоти носіїв (МіГ-31К, Ту-95/160)</td><td>той самий канал</td><td>2023 →</td><td>у 2022 не публікувались</td></tr>
+<tr><td>Погода погодинна, 20 показників</td><td>Open-Meteo ERA5</td><td>24.02.2022 →</td><td>повна</td></tr>
+<tr><td>Календар: свята, тривалість ночі</td><td>розрахунок</td><td>2022–2027</td><td>повна</td></tr>
+</tbody></table></div>
+
+<h2>Дві часові умовності</h2>
+<p>Час зберігається в UTC. Доба рахується двома способами, і для всієї добової
+аналітики використовується друга:</p>
+<pre><code>kyiv_day(ts) — календарна доба за київським часом
+raid_day(ts) — доба нальоту: з 12:00 до 12:00, підписана датою початку</code></pre>
+<p>Причина проста: наліт 22:00 → 05:00 це одна подія, а календарна північ ріже
+її навпіл і перетворює на дві половинчасті доби.</p>
+
+<h2>Чого в даних немає</h2>
+<p>Кількості ракет і дронів <b>саме по Києву не публікує ніхто</b>. Повітряні
+Сили дають точні числа за ніч по країні без розбивки по містах; КМВА і мер
+повідомляють наслідки, а не кількість цілей; ACLED рахує події, а не
+боєприпаси. Тому в базі три різні величини, які ніколи не складаються між собою:</p>
+<div class="scroll"><table>
+<thead><tr><th>Величина</th><th>Що це насправді</th></tr></thead>
+<tbody>
+<tr><td><code>scope='ua'</code></td><td>точні національні числа зі зведень ПС</td></tr>
+<tr><td><code>*_tracks</code>, <code>scope='kyiv'</code></td><td>скільки разів зафіксовано ціль курсом на Київ — спостереження, <b>не</b> кількість бортів</td></tr>
+<tr><td>наслідки, <code>scope='kyiv'</code></td><td>влучання, загиблі, поранені по місту</td></tr>
+</tbody></table></div>
+<blockquote>Колонки «20 ракет на Київ» бути не може. Модель, навчена на
+вигаданому числі, буде гіршою за модель, навчену на чесній порядковій шкалі.</blockquote>
+
+<h2>Негативи</h2>
+<p>«Обстрілу не було» стверджується тільки якщо джерело того дня доведено
+працювало (≥ 5 повідомлень у каналі за добу). Інакше збій парсера або мовчання
+каналу перетворилися б на «атаки не було» — найгірший тип брудних даних, бо
+непомітний: розмітка виглядає повною.</p>
+
+<h2>Відомі обмеження цих даних</h2>
+<ul style="font-size:15px;color:var(--soft);line-height:1.6">
+<li><b>Голосує одне джерело.</b> Мітку «атака» формує лише канал Повітряних Сил.
+Наслідки по місту (влучання, постраждалі) не збираються, тож заявленої
+перехресної перевірки трьома трактами фактично немає.</li>
+<li><b>2022–2023 майже без розмітки.</b> Формат супроводу цілей склався у 2024;
+раніші доби позначені як «невідомо», а не як «атаки не було», і в навчання
+не входять.</li>
+<li><b>Треки — це повідомлення, а не борти.</b> Їх кількість залежить від того,
+наскільки докладно канал описує обстановку, і росте з роками.</li>
+<li><b>Погода в CSV — фактична.</b> Для прогнозу вона непридатна (її ще не
+існує на момент відсічки), тому в модель не подається.</li>
+</ul>
+
+<h2>Покриття джерел зараз</h2>
+<div class="scroll"><table id="cov"><thead></thead><tbody></tbody></table></div>
+
+<div class="foot">
+  <div class="note">Дані оновлюються автоматично: тривоги кожні 5 хвилин,
+  канали кожні 15, погода щогодини. Оцінка на добу видається щодня о 12:05
+  за київським часом — у момент, коли починається вікно прогнозу.</div>
+  <div class="badge">ЄІ</div>
+</div>
+</main>
+
+<script>
+fetch('/api/latest.json?t=' + Date.now(), {cache:'no-store'}).then(r => r.json()).then(D => {
+  const cols = ['raid_day','attacked','alert_minutes','drone_tracks','missile_tracks','p_today','p_tomorrow'];
+  const names = ['доба нальоту','атака була','хвилин тривог','дрон-треки','ракетні треки','прогноз (сьогодні)','прогноз (завтра)'];
+  const t = document.getElementById('raw');
+  t.querySelector('thead').innerHTML = '<tr>' + names.map(n => '<th>' + n + '</th>').join('') + '</tr>';
+  t.querySelector('tbody').innerHTML = D.history.slice(0, 25).map(r =>
+    '<tr>' + cols.map(c => {
+      let v = r[c];
+      if(v === null || v === undefined) v = '—';
+      else if(v === true) v = 'так'; else if(v === false) v = 'ні';
+      else if(c.startsWith('p_')) v = Math.round(v * 100) + '%';
+      return '<td class="num">' + v + '</td>';
+    }).join('') + '</tr>').join('');
+
+  const cv = document.getElementById('cov');
+  if(D.coverage && D.coverage.length){
+    const keys = Object.keys(D.coverage[0]);
+    cv.querySelector('thead').innerHTML = '<tr>' + keys.map(k => '<th>' + k + '</th>').join('') + '</tr>';
+    cv.querySelector('tbody').innerHTML = D.coverage.map(r =>
+      '<tr>' + keys.map(k => '<td class="num">' + (r[k] ?? '—') + '</td>').join('') + '</tr>').join('');
+  }
+});
+</script>
+</body></html>

@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ймовірність повітряної атаки на Київ — air*alert</title>
+<meta name="description" content="Ймовірність повітряної атаки на Київ у вікні 12:00 → 12:00. Власна база тривог, зведень Повітряних Сил і погоди з 2022 року.">
+<meta property="og:title" content="Ймовірність повітряної атаки на Київ">
+<meta property="og:description" content="Одне число на добу нальоту 12:00 → 12:00, з відкритими даними й методологією.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="uk_UA">
+<link rel="canonical" href="https://airalert.mylovanov.media/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=Unbounded:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pink:#E0117E; --pink-soft:#FCE7F1; --ink:#14110F; --body:#332C2A;
+  --soft:#6B625F; --line:#E7DFE3; --paper:#FAF7F8; --card:#FFFFFF;
+  --ok:#1E9E6A; --ease:cubic-bezier(.22,.75,.28,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+body{margin:0;background:var(--paper);color:var(--body);
+  font-family:'Onest',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--pink);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1000px;margin:0 auto;padding:0 20px}
+
+/* ── шапка: тільки марка ───────────────────────────────────────────── */
+/* Навігація зверху дублювала три картки внизу і відбирала увагу в числа,
+   заради якого сторінку відкривають. Лишилась марка. */
+.top{border-bottom:1px solid var(--line);background:var(--paper)}
+.top .wrap{display:flex;align-items:center;justify-content:center;height:62px}
+.mark{font-family:'Unbounded',sans-serif;font-weight:800;font-size:19px;
+  letter-spacing:-.045em;text-decoration:none;color:var(--ink)}
+.mark i{font-style:normal;color:var(--pink)}
+
+/* ── герой ─────────────────────────────────────────────────────────── */
+.hero{display:flex;flex-direction:column;align-items:center;text-align:center;
+  padding:44px 0 56px}
+.seg{display:inline-flex;background:var(--card);border:1px solid var(--line);
+  border-radius:999px;padding:4px;position:relative}
+.seg button{position:relative;z-index:1;border:0;background:none;cursor:pointer;
+  font:inherit;font-size:14.5px;font-weight:700;color:var(--soft);
+  padding:10px 26px;border-radius:999px;min-height:44px;
+  transition:color .3s var(--ease)}
+.seg button[aria-selected=true]{color:#fff}
+.seg .pill{position:absolute;top:4px;left:4px;height:calc(100% - 8px);
+  background:var(--pink);border-radius:999px;z-index:0;
+  transition:transform .38s var(--ease),width .38s var(--ease)}
+
+.big{font-family:'Unbounded',sans-serif;font-weight:800;color:var(--pink);
+  font-size:clamp(104px,26vw,268px);line-height:.9;letter-spacing:-.06em;
+  margin:26px 0 0;font-variant-numeric:tabular-nums;
+  /* Один рух на все, що змінюється при перемиканні: число, підпис і плитки
+     їдуть однаково, інакше блок читається як три незалежні перезавантаження. */
+  transition:opacity .24s var(--ease),transform .24s var(--ease)}
+.big sup{font-size:.34em;vertical-align:.95em;margin-left:.03em;letter-spacing:-.02em}
+.say{font-size:clamp(18px,2.4vw,23px);color:var(--ink);font-weight:600;
+  max-width:22ch;margin:10px 0 0;line-height:1.3}
+.win{font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--soft);margin:16px 0 0}
+.win b{color:var(--pink)}
+
+/* Три плитки СТАТИЧНО в один ряд. Ніякого wrap: на телефоні вони просто
+   вужчі, а не перестрибують у стовпчик і не смикають висоту сторінки. */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+  width:100%;max-width:620px;margin:34px auto 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:14px 10px;min-width:0}
+.stat .k{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--soft);margin:0;line-height:1.3;height:2.6em;
+  display:flex;align-items:center;justify-content:center}
+.stat .v{font-family:'Unbounded',sans-serif;font-weight:800;color:var(--ink);
+  font-size:clamp(19px,4.4vw,26px);letter-spacing:-.035em;margin:4px 0 0;
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.stat .v.up{color:var(--pink)}
+.stat .v.down{color:var(--ok)}
+.fade{opacity:0;transform:translateY(-8px)}
+
+/* ── секції ────────────────────────────────────────────────────────── */
+section{border-top:1px solid var(--line);padding:48px 0}
+h2{font-family:'Unbounded',sans-serif;font-weight:800;color:var(--ink);
+  font-size:clamp(20px,3.2vw,29px);letter-spacing:-.04em;margin:0}
+.hint{font-size:14px;color:var(--soft);margin:10px 0 24px;max-width:62ch}
+
+/* ── календар року ─────────────────────────────────────────────────── */
+/* Сітка як у графіка комітів: колонка = тиждень, рядок = день тижня.
+   grid-auto-flow:column обовʼязково — інакше дні поїдуть рядками і
+   вертикаль перестане означати день тижня. */
+.cal{overflow-x:auto;padding:2px 0 6px;scrollbar-width:thin}
+.cal-in{display:inline-block;min-width:100%}
+.cal-mon{display:grid;grid-auto-flow:column;grid-auto-columns:15px;
+  font-size:10.5px;color:var(--soft);height:16px}
+.cal-grid{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,15px);
+  grid-auto-columns:15px}
+.cal-grid i{width:12px;height:12px;border-radius:2.5px;background:#EDE8EA;
+  transition:transform .16s var(--ease)}
+.cal-grid i:hover{transform:scale(1.4)}
+.cal-grid i.l1{background:#F7BEDC}
+.cal-grid i.l2{background:#EF7CBB}
+.cal-grid i.l3{background:#E43C99}
+.cal-grid i.l4{background:#A50A5C}
+.cal-grid i.void{background:none}
+.leg{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--soft);
+  margin-top:14px;flex-wrap:wrap}
+.leg i{width:12px;height:12px;border-radius:2.5px;display:inline-block}
+.leg .sp{flex:1 1 auto}
+
+/* ── як модель відпрацювала ────────────────────────────────────────── */
+.score{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:12px;margin:0 0 26px}
+.score div{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:14px 16px}
+.score .k{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--soft);margin:0}
+.score .v{font-family:'Unbounded',sans-serif;font-weight:800;color:var(--ink);
+  font-size:22px;letter-spacing:-.03em;margin:4px 0 0;font-variant-numeric:tabular-nums}
+.days{display:flex;gap:4px;overflow-x:auto;padding:6px 0 12px;scrollbar-width:thin}
+.day{flex:0 0 auto;width:32px;text-align:center}
+.day .bar{height:58px;display:flex;align-items:flex-end;justify-content:center}
+.day .fill{width:100%;background:var(--pink-soft);border-radius:3px 3px 0 0;
+  transition:height .5s var(--ease)}
+.day .fill.hi{background:var(--pink)}
+.day .res{font-size:13px;font-weight:800;line-height:1.5;color:#C6C0C3;
+  font-family:'Unbounded',sans-serif}
+.day .res.yes{color:var(--pink)}
+.day .res.no{color:var(--ok)}
+.day .dd{font-size:9.5px;color:var(--soft)}
+
+/* ── три картки ────────────────────────────────────────────────────── */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:780px){.cards{grid-template-columns:1fr}}
+.card{display:flex;flex-direction:column;background:var(--card);
+  border:1px solid var(--line);border-radius:18px;padding:24px;
+  text-decoration:none;color:inherit;
+  transition:border-color .24s var(--ease),transform .24s var(--ease),
+             box-shadow .24s var(--ease)}
+.card:hover{border-color:var(--pink);transform:translateY(-4px);
+  box-shadow:0 14px 34px rgba(224,17,126,.12)}
+.card .n{font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--pink);margin:0}
+.card h3{font-family:'Unbounded',sans-serif;font-weight:800;color:var(--ink);
+  font-size:19px;letter-spacing:-.035em;margin:12px 0 8px;line-height:1.2}
+.card p{font-size:14px;color:var(--soft);margin:0;line-height:1.5}
+.card .go{margin-top:16px;font-size:13px;font-weight:700;color:var(--pink)}
+
+/* ── підвал ────────────────────────────────────────────────────────── */
+.foot{display:flex;justify-content:space-between;align-items:center;gap:16px;
+  padding:24px 0 44px;border-top:1px solid var(--line)}
+.foot .note{color:var(--soft);font-size:12.5px;flex:1 1 auto}
+.badge{background:var(--pink);color:#fff;font-family:'Unbounded',sans-serif;
+  font-weight:800;font-size:22px;letter-spacing:.02em;border-radius:12px;
+  padding:8px 14px;flex:0 0 auto}
+@media (max-width:600px){.badge{font-size:18px;padding:7px 11px}}
+.live{display:inline-flex;align-items:center;gap:6px}
+.live i{width:7px;height:7px;border-radius:50%;background:var(--ok);
+  animation:pulse 2.4s var(--ease) infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="wrap">
+  <a class="mark" href="/">air<i>*</i>alert</a>
+</div></header>
+
+<main class="wrap">
+
+  <section class="hero" style="border-top:0">
+    <div class="seg" role="tablist" aria-label="Вікно прогнозу">
+      <span class="pill" id="pill"></span>
+      <button role="tab" id="tab-today" aria-selected="true">Сьогодні</button>
+      <button role="tab" id="tab-tomorrow" aria-selected="false">Завтра</button>
+    </div>
+
+    <div class="big" id="big">—<sup>%</sup></div>
+    <p class="say">ймовірність повітряної атаки на Київ</p>
+    <p class="win" id="win">завантаження…</p>
+
+    <div class="stats">
+      <div class="stat"><p class="k">Масована атака</p><p class="v" id="s-mass">—</p></div>
+      <div class="stat"><p class="k">Тривога понад 30 хв</p><p class="v" id="s-alert">—</p></div>
+      <div class="stat"><p class="k">Проти звичайного</p><p class="v" id="s-delta">—</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Рік обстрілів</h2>
+    <p class="hint">Кожна клітинка — доба нальоту 12:00 → 12:00, колонка — тиждень.
+      Зафарбована клітинка означає, що атака була; насиченість показує, наскільки
+      важкою вона вийшла.</p>
+    <div class="cal"><div class="cal-in">
+      <div class="cal-mon" id="cal-mon"></div>
+      <div class="cal-grid" id="cal"></div>
+    </div></div>
+    <div class="leg">
+      <span>не було</span>
+      <i style="background:#EDE8EA"></i><i style="background:#F7BEDC"></i>
+      <i style="background:#EF7CBB"></i><i style="background:#E43C99"></i>
+      <i style="background:#A50A5C"></i>
+      <span>масована</span>
+      <span class="sp"></span>
+      <span id="cal-sum"></span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Як модель відпрацювала</h2>
+    <p class="hint">Для кожної доби, що вже завершилась: яку ймовірність називала
+      модель і чи була атака насправді. Це єдина перевірка, яка щось означає —
+      усе інше є оцінкою самої себе.</p>
+    <div class="score" id="score"></div>
+    <div class="days" id="days"></div>
+    <div class="leg">
+      <span><b style="color:var(--pink)">✕</b> атака була</span>
+      <span><b style="color:var(--ok)">✓</b> атаки не було</span>
+      <span class="live"><i></i> оновлюється автоматично</span>
+    </div>
+  </section>
+
+  <section>
+    <div class="cards">
+      <a class="card" href="/data.html">
+        <p class="n">01</p><h3>Дані</h3>
+        <p>Завантажити все у CSV, побачити сирі рядки як вони є й прочитати,
+           звідки що береться.</p>
+        <p class="go">Дивитися →</p>
+      </a>
+      <a class="card" href="/why.html">
+        <p class="n">02</p><h3>Чому саме це число</h3>
+        <p>Що модель побачила у вчорашніх даних, які ознаки зважили найбільше
+           і як склався відсоток.</p>
+        <p class="go">Розібратися →</p>
+      </a>
+      <a class="card" href="/methodology.html">
+        <p class="n">03</p><h3>Методологія</h3>
+        <p>Означення цільової змінної, відсічка й витік, валідація, формули
+           метрик, склад ансамблю.</p>
+        <p class="go">Читати →</p>
+      </a>
+    </div>
+  </section>
+
+  <div class="foot">
+    <div class="note">
+      Джерела: реєстр КМДА (kyiv.digital), канал Повітряних Сил, Open-Meteo ERA5.
+      Дані з 24.02.2022. <span id="gen"></span>
+    </div>
+    <div class="badge">ЄІ</div>
+  </div>
+
+</main>
+
+<script>
+const PCT = p => Math.round(p * 100);
+const MONS = ['січ','лют','бер','кві','тра','чер','лип','сер','вер','жов','лис','гру'];
+let DATA = null, view = 'today';
+
+/* Позиція «пігулки» рахується з реальних розмірів кнопок: слова різної
+   довжини, і фіксовані відсотки роз'їжджаються, щойно підвантажиться шрифт. */
+function movePill(){
+  const on = document.querySelector('.seg button[aria-selected=true]');
+  const pill = document.getElementById('pill');
+  pill.style.width = on.offsetWidth + 'px';
+  pill.style.transform = 'translateX(' + (on.offsetLeft - 4) + 'px)';
+}
+
+function fmt(s){
+  const [d, t] = s.split(' ');
+  const x = new Date(d + 'T00:00:00');
+  return x.getDate() + ' ' + MONS[x.getMonth()] + ' ' + t;
+}
+
+/* Скільки таких діб було насправді за останній місяць — база, відносно якої
+   число має сенс. Без неї «57%» не відрізнити від «як завжди». */
+function climate(){
+  const done = DATA.history.filter(r => r.attacked !== null).slice(0, 30);
+  if(!done.length) return null;
+  return done.filter(r => r.attacked).length / done.length;
+}
+
+function render(){
+  const c = DATA && DATA[view];
+  const big = document.getElementById('big');
+  const els = [big, document.getElementById('s-mass'),
+               document.getElementById('s-alert'), document.getElementById('s-delta')];
+  if(!c){
+    big.innerHTML = '—<sup>%</sup>';
+    document.getElementById('win').textContent = 'прогноз ще не видано';
+    return;
+  }
+  els.forEach(e => e.classList.add('fade'));
+  setTimeout(() => {
+    big.innerHTML = PCT(c.p_attack) + '<sup>%</sup>';
+    document.getElementById('s-mass').textContent =
+      c.p_massive == null ? '—' : PCT(c.p_massive) + '%';
+    document.getElementById('s-alert').textContent =
+      c.p_alert30 == null ? '—' : PCT(c.p_alert30) + '%';
+    const cl = climate(), d = document.getElementById('s-delta');
+    if(cl == null){ d.textContent = '—'; }
+    else {
+      const dd = Math.round((c.p_attack - cl) * 100);
+      d.textContent = (dd > 0 ? '+' : '') + dd + ' п.п.';
+      d.className = 'v ' + (dd > 2 ? 'up' : dd < -2 ? 'down' : '');
+    }
+    els.forEach(e => e.classList.remove('fade'));
+  }, 240);
+  const [a, b] = c.window.split(' → ');
+  document.getElementById('win').innerHTML =
+    'вікно <b>' + fmt(a) + '</b> → <b>' + fmt(b) + '</b>';
+}
+
+function calendar(){
+  const grid = document.getElementById('cal'), mon = document.getElementById('cal-mon');
+  grid.innerHTML = ''; mon.innerHTML = '';
+  const rows = DATA.history.filter(r => r.attacked !== null).slice(0, 371).reverse();
+  if(!rows.length) return;
+
+  /* Перша колонка добивається порожніми клітинками до понеділка: інакше
+     рядок «понеділок» містив би вівторки і вертикаль втратила б сенс. */
+  const first = new Date(rows[0].raid_day + 'T00:00:00');
+  const pad = (first.getDay() + 6) % 7;
+  for(let i = 0; i < pad; i++){
+    const v = document.createElement('i'); v.className = 'void'; grid.appendChild(v);
+  }
+  const lvl = r => {
+    if(!r.attacked) return '';
+    if(r.massive) return 'l4';
+    if(r.alert_minutes >= 300) return 'l3';
+    if(r.alert_minutes >= 120) return 'l2';
+    return 'l1';
+  };
+  let seen = -1, cells = pad, atk = 0, mass = 0;
+  for(const r of rows){
+    const d = new Date(r.raid_day + 'T00:00:00');
+    const el = document.createElement('i');
+    el.className = lvl(r);
+    el.title = r.raid_day + (r.attacked
+      ? ' — атака: ' + r.alert_minutes + ' хв тривог' +
+        (r.drone_tracks ? ', цілей ' + r.drone_tracks : '') +
+        (r.massive ? ' (масована)' : '')
+      : ' — атаки не було' + (r.alert_minutes ? ', тривог ' + r.alert_minutes + ' хв' : ''));
+    grid.appendChild(el);
+    if(r.attacked) atk++;
+    if(r.massive) mass++;
+    if(cells % 7 === 0 || cells === pad){   /* перша колонка теж має підпис */
+      const m = d.getMonth(), lab = document.createElement('span');
+      lab.textContent = m !== seen ? MONS[m] : '';
+      seen = m; mon.appendChild(lab);
+    }
+    cells++;
+  }
+  document.getElementById('cal-sum').textContent =
+    atk + ' діб з атаками за ' + rows.length + ', з них масованих ' + mass;
+}
+
+function scoreboard(){
+  const done = DATA.history.filter(r => r.attacked !== null &&
+                (r.p_today != null || r.p_tomorrow != null));
+  const box = document.getElementById('score');
+  if(!done.length){
+    box.innerHTML = '<div><p class="k">Перевірених діб</p><p class="v">0</p></div>';
+  } else {
+    const n = done.length;
+    const brier = done.reduce((a, r) =>
+      a + Math.pow((r.p_today ?? r.p_tomorrow) - (r.attacked ? 1 : 0), 2), 0) / n;
+    const hit = done.filter(r =>
+      ((r.p_today ?? r.p_tomorrow) >= .5) === r.attacked).length;
+    const base = done.filter(r => r.attacked).length / n;
+    box.innerHTML = [
+      ['Перевірених діб', n],
+      ['Brier (менше — краще)', brier.toFixed(3)],
+      ['Вгадано напрямок', Math.round(hit / n * 100) + '%'],
+      ['Атак у цей період', Math.round(base * 100) + '%'],
+    ].map(([k, v]) => '<div><p class="k">' + k + '</p><p class="v">' + v + '</p></div>').join('');
+  }
+
+  const strip = document.getElementById('days');
+  strip.innerHTML = '';
+  for(const r of DATA.history.filter(x => x.attacked !== null).slice(0, 45).reverse()){
+    const p = r.p_today ?? r.p_tomorrow;
+    const el = document.createElement('div');
+    el.className = 'day';
+    const h = p == null ? 0 : Math.max(3, p * 58);
+    const d = new Date(r.raid_day + 'T00:00:00');
+    el.innerHTML =
+      '<div class="bar"><div class="fill' + (p >= .5 ? ' hi' : '') +
+        '" style="height:' + h + 'px"></div></div>' +
+      '<div class="res ' + (r.attacked ? 'yes' : 'no') + '">' +
+        (r.attacked ? '✕' : '✓') + '</div>' +
+      '<div class="dd">' + d.getDate() + '.' +
+        String(d.getMonth() + 1).padStart(2, '0') + '</div>';
+    el.title = r.raid_day + (p == null ? ' — прогнозу не було' : ' — прогноз ' + PCT(p) + '%') +
+      (r.attacked ? ', атака була' : ', атаки не було');
+    strip.appendChild(el);
+  }
+  strip.scrollLeft = strip.scrollWidth;
+}
+
+async function load(){
+  try{
+    const r = await fetch('/api/latest.json?t=' + Date.now(), {cache: 'no-store'});
+    DATA = await r.json();
+    render(); calendar(); scoreboard();
+    const g = new Date(DATA.generated_at);
+    document.getElementById('gen').textContent =
+      'Оновлено ' + g.getDate() + ' ' + MONS[g.getMonth()] + ' ' +
+      String(g.getHours()).padStart(2, '0') + ':' +
+      String(g.getMinutes()).padStart(2, '0') + '.';
+  }catch(e){
+    document.getElementById('win').textContent = 'дані тимчасово недоступні';
+  }
+}
+
+for(const id of ['today', 'tomorrow']){
+  document.getElementById('tab-' + id).addEventListener('click', e => {
+    view = id;
+    document.querySelectorAll('.seg button').forEach(b =>
+      b.setAttribute('aria-selected', b === e.currentTarget));
+    movePill(); render();
+  });
+}
+addEventListener('resize', movePill);
+if(document.fonts) document.fonts.ready.then(movePill);
+movePill(); load();
+setInterval(load, 120000);   /* сторінка може висіти відкритою добу */
+</script>
+</body>
+</html>

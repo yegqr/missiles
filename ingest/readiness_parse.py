@@ -26,9 +26,15 @@ CHANNEL = "kpszsu"
 NL = "§¶"
 
 RE_MIG_UP   = re.compile(r"зліт\s+\d*х?\s*(?:винищувач\w+\s+)?МіГ-?31|зафіксовано зліт МіГ", re.I)
-RE_MIG_DOWN = re.compile(r"відбій\s+(?:загроз\w+\s+)?по\s+МіГ-?31", re.I)
+# Канал перефразовує «відбій» щороку, і жорстка форма тихо перестає ловити:
+# «Відбій небезпеки по МіГ-31К», «Відбій ракетної небезпеки по МіГ-31К»,
+# «Відбій загрози МіГ-31К по областях», «Відбій загрози МіГ 31К» (пробіл
+# замість дефіса). За 2026 рік стара форма губила 12 відбоїв із 23.
+# Тому: слово «відбій» і згадка МіГ-31 у межах одного короткого фрагмента,
+# без вимог до того, що стоїть між ними.
+RE_MIG_DOWN = re.compile(r"відбій[^.!?]{0,60}МіГ[\s-]?31", re.I)
 RE_TU       = re.compile(r"Ту-?160|Ту-?95", re.I)
-RE_TU_UP    = re.compile(r"зліт|злет|піднял|вилет|фіксується", re.I)
+RE_TU_UP    = re.compile(r"зліт|злет|піднял|вилет|фіксується|злітел|у повітр", re.I)
 RE_KALIBR   = re.compile(r"носі\w+.{0,40}Калібр|Калібр.{0,40}Чорн\w+ мор|"
                          r"надводн\w+ носі|підводн\w+ човн", re.I)
 RE_AIRFIELD = re.compile(r"аеродром\w*\s+[«\"']?([А-ЯЇІЄҐA-Z][а-яїієґ'’\-A-Za-z]+)", re.I)
@@ -66,6 +72,12 @@ def run():
         if RE_KALIBR.search(head):
             out.append((ts, "carrier", "kalibr_ship", None, False, msg_id, head[:300]))
 
+    # Повний перерозбір, як вимагає контракт із 013_parse_state.sql: спершу
+    # знімаємо все, що цей парсер писав, і лише потім пишемо заново. Без цього
+    # виправлення регулярок лише ДОДАВАЛО б нові рядки, а старі, класифіковані
+    # за колишнім правилом, лишались би назавжди — і база переставала б бути
+    # відтворюваною з нуля непомітно для всіх.
+    db.sql("DELETE FROM readiness_signals WHERE source = %s", (CHANNEL,))
     db.copy_upsert(
         "readiness_signals",
         ["ts", "signal_type", "platform", "airfield", "is_standdown",
@@ -79,6 +91,8 @@ def run():
 if __name__ == "__main__":
     with db.Run("readiness_parse", "backfill", {"channel": CHANNEL}) as r:
         need, cur = db.parse_cursor("readiness_parse", CHANNEL)
+        if "--force" in sys.argv:      # правила розбору змінились
+            need = True
         if not need:
             r.skip(f"канал не виріс (msg_id {cur})")
             print("  нових повідомлень немає — розбір пропущено")
