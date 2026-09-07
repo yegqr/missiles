@@ -46,6 +46,12 @@ def main():
 
     with psycopg.connect(dataset.DB) as c:
         c.execute("DELETE FROM predictions WHERE model = 'backtest_median_top5'")
+        # Доби, на які вже є живий прогноз, бектестом не накриваються: живе
+        # твердження не можна підміняти порахованим заднім числом.
+        live = {r[0] for r in c.execute(
+            "SELECT DISTINCT raid_day FROM predictions "
+            "WHERE NOT starts_with(model, 'backtest')").fetchall()}
+        rows = [r for r in rows if r[0] not in live]
         c.cursor().executemany(
             "INSERT INTO predictions "
             "(raid_day,target,horizon,p,model,members,prior_shift,n_train) "

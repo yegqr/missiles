@@ -42,11 +42,15 @@ def main():
     now = kyiv_now()
     today = (now - timedelta(hours=12)).date()      # доба нальоту, що триває
     with psycopg.connect(DB) as c:
+        # Живий прогноз завжди виграє в бектесту на ту саму добу. Бектест
+        # рахується заднім числом і запускається пізніше, тому за самим лише
+        # issued_at він перекривав би те, що модель справді видала о 12:00.
         preds = fetch(c, """
             SELECT DISTINCT ON (raid_day, target, horizon)
                    raid_day, target, horizon, p, issued_at, model, n_train, members
             FROM predictions
-            ORDER BY raid_day, target, horizon, issued_at DESC""")
+            ORDER BY raid_day, target, horizon,
+                     starts_with(model, 'backtest') ASC, issued_at DESC""")
         hist = fetch(c, """
             SELECT raid_day, y_attacked, y_alert_minutes, y_drone_tracks, y_missile_tracks
             FROM v_daily_features
