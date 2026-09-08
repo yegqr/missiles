@@ -137,8 +137,17 @@ def daily(write: bool = True):
     horizon=2 — наступне вікно. Ознаки зі зсувом 2, бо на відсічці доба
     між сьогодні й завтра ще триває і її підсумків не існує.
     """
+    # Горизонти незалежні. Падіння одного не має ховати другий і не має
+    # зупиняти перебудову сайту: саме так «завтра» тихо зникло зі сторінки.
+    failed = []
     for lag, day_off in ((1, 0), (2, 1)):
-        _daily_one(lag, day_off, write)
+        try:
+            _daily_one(lag, day_off, write)
+        except SystemExit as e:
+            failed.append(f"горизонт {lag}: {e}")
+            print(f"  ПОМИЛКА горизонту {lag}: {e}")
+    if failed:
+        raise SystemExit("; ".join(failed))
 
 
 def _daily_one(lag: int, day_off: int, write: bool):
@@ -147,8 +156,10 @@ def _daily_one(lag: int, day_off: int, write: bool):
     row = d[d.raid_day == day]
     if row.empty:
         raise SystemExit(f"немає рядка ознак на {day.date()} — спершу оновіть дані")
-    # у навчання йдуть лише доби, підсумки яких повністю відомі на відсічці
-    tr = d[d.raid_day <= day - pd.Timedelta(days=lag)]
+    # У навчання йдуть лише доби, підсумки яких повністю відомі на відсічці.
+    # y_known обовʼязковий: у d тепер лишається хвіст майбутніх діб без лейбла,
+    # інакше горизонт «завтра» не мав би рядка ознак на цільову добу.
+    tr = d[(d.raid_day <= day - pd.Timedelta(days=lag)) & d.y_known]
     print(f"\nГоризонт {lag} → доба нальоту {day.date()} (12:00 → 12:00). "
           f"Навчання на {len(tr)} добах ({tr.raid_day.min().date()} → {tr.raid_day.max().date()})")
 

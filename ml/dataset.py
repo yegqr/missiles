@@ -171,7 +171,19 @@ def build(weather: bool = True, lag: int = 1, future_days: int = 0):
     # перші 30 рядків мають неповні вікна — відрізаємо, щоб не імпутувати наосліп
     d = d.iloc[30:].reset_index(drop=True)
     n = len(d)
-    d = d[d["y_known"]].reset_index(drop=True)   # лейбл невідомий -> не вчимось
+    # Лейбл невідомий -> не вчимось. АЛЕ хвостові доби, впущені через
+    # future_days, лейбла не мають і мати не можуть: це та сама доба, на яку
+    # робиться прогноз. Викидати їх тут означало б, що future_days не працює
+    # взагалі — рівно це й ламало горизонт «завтра»: ml/final.py падав з
+    # «немає рядка ознак на <завтра>», і скрипт помирав до перебудови сайту.
+    # За те, щоб непозначені доби не потрапили в НАВЧАННЯ, відповідає фільтр
+    # по y_known у final._daily_one.
+    keep = d["y_known"].copy()
+    if future_days:
+        known = d.loc[d["y_known"], "raid_day"]
+        if len(known):
+            keep |= d["raid_day"] > known.max()
+    d = d[keep].reset_index(drop=True)
     if n - len(d):
         print(f"  dataset: {n - len(d)} діб без лейбла відкинуто ПІСЛЯ побудови ознак")
     return d, blocks

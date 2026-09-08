@@ -1,0 +1,363 @@
+{
+ "згенеровано": "2026-09-08T10:40:49.727782+00:00",
+ "джерело": "https://github.com/mylovanov/MISSILES",
+ "ліцензія": "CC BY 4.0 на дані, MIT на код",
+ "часова_зона": "усі мітки часу в UTC; доба нальоту — київська",
+ "шари": {
+  "00_regions": {
+   "файл": "00_regions.csv.gz",
+   "рядків": 9,
+   "колонок": 11,
+   "байтів": 527,
+   "sha256": "2f9d8f7d3dcfca0e7c82e82eb959ba73fbbc0f57661b023fee0d1a69799e2f04",
+   "період": null,
+   "парсер": "db/migrations/001_init.sql",
+   "опис": "Довідник територій: місто, область, 7 районів. parent_id задає вкладеність — область є обʼєднанням районів, тому рівні НІКОЛИ не складаються між собою.",
+   "колонки": [
+    "id",
+    "code",
+    "name_uk",
+    "name_en",
+    "level",
+    "parent_id",
+    "alerts_in_ua_uid",
+    "lat",
+    "lon",
+    "is_tracked",
+    "created_at"
+   ]
+  },
+  "00_alert_sources": {
+   "файл": "00_alert_sources.csv.gz",
+   "рядків": 5,
+   "колонок": 3,
+   "байтів": 366,
+   "sha256": "9b71034c9c3a86ee397f0b3af6ba81f1572adbf1e09d70791e879a88593f155d",
+   "період": null,
+   "парсер": "db/migrations/003_canonical.sql",
+   "опис": "Джерела тривог і їхній пріоритет. Менше число — вищий пріоритет при злитті в канонічний ряд.",
+   "колонки": [
+    "code",
+    "priority",
+    "note"
+   ]
+  },
+  "00_tg_channels": {
+   "файл": "00_tg_channels.csv.gz",
+   "рядків": 8,
+   "колонок": 6,
+   "байтів": 703,
+   "sha256": "585cac1e13ad24a72f9d021bd025e0336940d71ed6075fc5aebfea6c35f1e414",
+   "період": null,
+   "парсер": "ingest/tg_accounts.py",
+   "опис": "Телеграм-канали, з яких зібрано первинні повідомлення.",
+   "колонки": [
+    "handle",
+    "title",
+    "tier",
+    "role",
+    "is_active",
+    "added_at"
+   ]
+  },
+  "00_weather_locations": {
+   "файл": "00_weather_locations.csv.gz",
+   "рядків": 1,
+   "колонок": 5,
+   "байтів": 123,
+   "sha256": "2473f0fab8142991e0d69873f0fec322df8396d46d065ce3c0713ea7ba491aaa",
+   "період": null,
+   "парсер": "ingest/weather.py",
+   "опис": "Точки, для яких тягнеться погода.",
+   "колонки": [
+    "id",
+    "code",
+    "name",
+    "lat",
+    "lon"
+   ]
+  },
+  "10_alerts": {
+   "файл": "10_alerts.csv.gz",
+   "рядків": 27312,
+   "колонок": 13,
+   "байтів": 422637,
+   "sha256": "3aabbf39d63a6f7b42f42c36bc90ea3432683aee2f894b5d1e1578dd3981487a",
+   "період": [
+    "2022-02-25T05:19:07+00:00",
+    "2026-09-08T08:00:43+00:00"
+   ],
+   "парсер": "ingest/kyiv_digital.py, ingest/tg_parse.py, ingest/alerts_backfill.py",
+   "опис": "СИРІ тривоги всіх джерел, як їх віддало джерело, з полем raw. Перекриття і дублікати між джерелами тут ЩЕ Є: їх зводить канонічний шар.",
+   "колонки": [
+    "id",
+    "region_id",
+    "started_at",
+    "finished_at",
+    "alert_type",
+    "source",
+    "source_alert_id",
+    "raw",
+    "duration_min",
+    "raid_day",
+    "created_at",
+    "updated_at",
+    "causes"
+   ]
+  },
+  "11_attack_observations": {
+   "файл": "11_attack_observations.csv.gz",
+   "рядків": 5040,
+   "колонок": 10,
+   "байтів": 111602,
+   "sha256": "4c292d9d9568d2817eb47bc2728b546edbb57499f65c22343b93a15a29463d6c",
+   "період": [
+    "2022-03-01",
+    "2026-09-08"
+   ],
+   "парсер": "ingest/kpszsu_parse.py",
+   "опис": "Спостереження зі зведень Повітряних Сил: цілі курсом на Київ, національні підсумки, наслідки. metric — що саме виміряно, scope — до чого це стосується ('kyiv' або 'ua'), evidence_text — рядок, з якого це взято. Величини різних scope НІКОЛИ не складаються між собою.",
+   "колонки": [
+    "raid_day",
+    "region_id",
+    "source",
+    "tier",
+    "metric",
+    "scope",
+    "value",
+    "evidence_msg_id",
+    "evidence_text",
+    "extracted_at"
+   ]
+  },
+  "12_readiness_signals": {
+   "файл": "12_readiness_signals.csv.gz",
+   "рядків": 494,
+   "колонок": 10,
+   "байтів": 16766,
+   "sha256": "be65a8adf50525749af068e3840094f07d32a2e76b3f35a29730ec322541a6ab",
+   "період": [
+    "2022-03-06T16:57:02+00:00",
+    "2026-08-07T15:13:39+00:00"
+   ],
+   "парсер": "ingest/readiness_parse.py",
+   "опис": "Зльоти носіїв (МіГ-31К, Ту-95/160, пуски «Калібрів») і відбої готовності.",
+   "колонки": [
+    "id",
+    "ts",
+    "signal_type",
+    "platform",
+    "airfield",
+    "is_standdown",
+    "source",
+    "msg_id",
+    "evidence",
+    "raid_day"
+   ]
+  },
+  "13_weather_hourly": {
+   "файл": "13_weather_hourly.csv.gz",
+   "рядків": 39792,
+   "колонок": 24,
+   "байтів": 1018241,
+   "sha256": "dd9c6551145f1539c3e1f72b831da377ee93feb60c112c6015a6b8e8db18985b",
+   "період": [
+    "2022-02-24T00:00:00+00:00",
+    "2026-09-08T23:00:00+00:00"
+   ],
+   "парсер": "ingest/weather.py",
+   "опис": "Погодинна фактична погода (ERA5 + оперативні дані Open-Meteo), 20 показників. УВАГА: це реаналіз, тобто ЗАДНІМ ЧИСЛОМ. Для прогнозу він непридатний — на момент відсічки цих значень ще не існує.",
+   "колонки": [
+    "location_id",
+    "ts",
+    "source",
+    "temperature_2m",
+    "apparent_temperature",
+    "relative_humidity_2m",
+    "dew_point_2m",
+    "precipitation",
+    "rain",
+    "snowfall",
+    "cloud_cover",
+    "cloud_cover_low",
+    "cloud_cover_mid",
+    "cloud_cover_high",
+    "visibility",
+    "wind_speed_10m",
+    "wind_speed_100m",
+    "wind_gusts_10m",
+    "wind_direction_10m",
+    "surface_pressure",
+    "pressure_msl",
+    "weather_code",
+    "is_day",
+    "fetched_at"
+   ]
+  },
+  "14_weather_forecast": {
+   "файл": "14_weather_forecast.csv.gz",
+   "рядків": 3192,
+   "колонок": 14,
+   "байтів": 23807,
+   "sha256": "fc4680e50233258105cb8fcd9e006952f155b2186a7f4962e630df6b6980ddbe",
+   "період": [
+    "2026-09-07T00:00:00+00:00",
+    "2026-09-14T23:00:00+00:00"
+   ],
+   "парсер": "ingest/weather.py",
+   "опис": "Прогноз погоди з часом видачі issued_at. Ось це подавати в модель можна: зріз відомий наперед.",
+   "колонки": [
+    "location_id",
+    "issued_at",
+    "ts",
+    "temperature_2m",
+    "precipitation",
+    "cloud_cover",
+    "cloud_cover_low",
+    "visibility",
+    "wind_speed_10m",
+    "wind_speed_100m",
+    "wind_gusts_10m",
+    "wind_direction_10m",
+    "surface_pressure",
+    "weather_code"
+   ]
+  },
+  "15_calendar_days": {
+   "файл": "15_calendar_days.csv.gz",
+   "рядків": 2191,
+   "колонок": 9,
+   "байтів": 12957,
+   "sha256": "27ead83a9918f83f3569e2e683452e8c8f0bff7fd91af8856a64573d727bb864",
+   "період": [
+    "2022-01-01",
+    "2027-12-31"
+   ],
+   "парсер": "ingest/calendar_build.py",
+   "опис": "Календар: свята українські й російські з вагою, тривалість темного часу, опалювальний сезон. Доведений до 2027 року, тому МАЙБУТНІ доби тут теж є.",
+   "колонки": [
+    "day",
+    "dow",
+    "month",
+    "holiday_ua",
+    "holiday_ua_w",
+    "holiday_ru",
+    "holiday_ru_w",
+    "night_hours",
+    "heating_season"
+   ]
+  },
+  "20_alerts_canonical": {
+   "файл": "20_alerts_canonical.csv.gz",
+   "рядків": 11216,
+   "колонок": 8,
+   "байтів": 137869,
+   "sha256": "85ddf0fa291ea260e71efe299c02a3359a2b94444e9e91dc2cb9618fea3c12dd",
+   "період": [
+    "2022-02-25T05:19:07+00:00",
+    "2026-09-08T08:00:43+00:00"
+   ],
+   "парсер": "db/migrations/020_parts_overlap.sql, 024_open_alert_now.sql",
+   "опис": "Канонічний ряд тривог: джерела злиті за пріоритетом, дублікати прибрані, перекриття склеєні. Відкритий інтервал закінчується min(зараз, старт+24 год). Це той ряд, з якого рахуються всі хвилини.",
+   "колонки": [
+    "region_code",
+    "region_id",
+    "started_at",
+    "finished_at",
+    "duration_min",
+    "raid_day",
+    "parts",
+    "merged_from"
+   ]
+  },
+  "21_alerts_daily": {
+   "файл": "21_alerts_daily.csv.gz",
+   "рядків": 4829,
+   "колонок": 6,
+   "байтів": 30200,
+   "sha256": "16393c1c4c02089c0f9486d987a98f6f601b96360fe636bb912a7f3b338c08f7",
+   "період": [
+    "2022-02-24",
+    "2026-09-08"
+   ],
+   "парсер": "db/migrations/016_massive.sql",
+   "опис": "Добові агрегати тривог по ДОБІ НАЛЬОТУ (12:00→12:00) для всіх 9 територій. Щоб дістати місто — фільтруйте region_code='kyiv_city'. Наївна сума по всьому файлу рахує область і райони двічі.",
+   "колонки": [
+    "region_code",
+    "region_id",
+    "raid_day",
+    "alerts_count",
+    "total_minutes",
+    "night_minutes"
+   ]
+  },
+  "30_daily_features": {
+   "файл": "30_daily_features.csv.gz",
+   "рядків": 2137,
+   "колонок": 29,
+   "байтів": 51530,
+   "sha256": "f6b3ab5c7432698e13c9222f0afbef456f757086cbeb6a4a20d22a454cc38534",
+   "період": [
+    "2022-02-24",
+    "2027-12-31"
+   ],
+   "парсер": "ml/dataset.py",
+   "опис": "Навчальна таблиця: один рядок — одна доба нальоту. Колонки *_prev — ознаки (відомі до відсічки 12:00), y_* — те, що сталося. y_attacked IS NULL означає «невідомо», а НЕ «атаки не було»: такі доби в навчання не йдуть.",
+   "колонки": [
+    "raid_day",
+    "dow",
+    "month",
+    "night_hours",
+    "heating_season",
+    "holiday_ua",
+    "holiday_ua_w",
+    "holiday_ru",
+    "holiday_ru_w",
+    "alerts_prev",
+    "alert_minutes_prev",
+    "drone_tracks_prev",
+    "missile_tracks_prev",
+    "drone_tracks_obl_prev",
+    "missile_tracks_obl_prev",
+    "drones_launched_ua_prev",
+    "mig31k_prev",
+    "strategic_prev",
+    "kalibr_prev",
+    "night_cloud_low_avg",
+    "night_wind_avg",
+    "night_temp_avg",
+    "night_precip_sum",
+    "y_attacked",
+    "y_drone_tracks",
+    "y_missile_tracks",
+    "y_drone_tracks_obl",
+    "y_alert_minutes",
+    "mig31k_same_window"
+   ]
+  },
+  "31_predictions": {
+   "файл": "31_predictions.csv.gz",
+   "рядків": 397,
+   "колонок": 9,
+   "байтів": 3929,
+   "sha256": "26bc77e90158573add6d584159bebf34607763b1835e2c04a082268c4c339cd5",
+   "період": [
+    "2026-03-01",
+    "2026-09-09"
+   ],
+   "парсер": "ml/final.py",
+   "опис": "Кожна видана оцінка з часом видачі. model='climatology30' — опублікована кліматологія, 'backtest_*' — порахована заднім числом, members містить тіньовий вихід ансамблю ensemble_p. Рядки не перезаписуються.",
+   "колонки": [
+    "raid_day",
+    "target",
+    "issued_at",
+    "p",
+    "model",
+    "members",
+    "prior_shift",
+    "n_train",
+    "horizon"
+   ]
+  }
+ }
+}
