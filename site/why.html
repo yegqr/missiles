@@ -7,31 +7,40 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=Unbounded:wght@700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/s.css">
-<title>Чому саме ця ймовірність — airalert</title>
-<meta name="description" content="Що модель побачила у вчорашніх даних, які ознаки зважили найбільше і як склалося сьогоднішнє число.">
+<title>Чому саме це число — airalert</title>
+<meta name="description" content="Звідки береться відсоток на головній сторінці: розрахунок у штуках діб, словник термінів і чесне порівняння з моделлю.">
 <style>
+.calc{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--pink);
+  border-radius:16px;padding:22px 24px;margin:22px 0}
+.calc .eq{font-family:'Unbounded',sans-serif;font-weight:800;color:var(--ink);
+  font-size:clamp(18px,3.4vw,26px);letter-spacing:-.03em;line-height:1.35;
+  font-variant-numeric:tabular-nums;margin:0}
+.calc .eq b{color:var(--pink)}
+.calc p{margin:12px 0 0;font-size:15px;color:var(--soft)}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;
+  margin:22px 0}
+.gloss div{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:16px 18px}
+.gloss b{display:block;font-family:'Unbounded',sans-serif;font-weight:800;
+  color:var(--ink);font-size:14.5px;letter-spacing:-.02em;margin-bottom:4px}
+.gloss span{font-size:14.5px;color:var(--soft);line-height:1.5}
 .spark{display:flex;align-items:flex-end;gap:3px;height:80px;margin:18px 0 6px}
 .spark div{flex:1;background:var(--pink-soft);border-radius:3px 3px 0 0;min-height:2px;
   transition:height .6s var(--ease)}
 .spark div.hi{background:var(--pink)}
 .axis{display:flex;justify-content:space-between;font-size:11px;color:var(--soft)}
-.now{display:flex;gap:14px;flex-wrap:wrap;margin:22px 0 0}
+.now{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;
+  margin:22px 0 0}
 .now div{background:var(--card);border:1px solid var(--line);border-radius:14px;
-  padding:14px 18px;min-width:150px}
+  padding:14px 18px}
 .now .k{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
   color:var(--soft);margin:0}
-.now .v{font-family:'Unbounded',sans-serif;font-weight:800;font-size:24px;
+.now .v{font-family:'Unbounded',sans-serif;font-weight:800;font-size:22px;
   color:var(--pink);letter-spacing:-.03em;margin:4px 0 0;font-variant-numeric:tabular-nums}
-.steps{counter-reset:s;margin:22px 0}
-.step{position:relative;padding:0 0 22px 46px;border-left:2px solid var(--line);
-  margin-left:14px}
-.step:last-child{border-left-color:transparent}
-.step::before{counter-increment:s;content:counter(s);position:absolute;left:-15px;top:0;
-  width:28px;height:28px;border-radius:50%;background:var(--pink);color:#fff;
-  display:grid;place-items:center;font-weight:800;font-size:13px;
-  font-family:'Unbounded',sans-serif}
-.step b{display:block;color:var(--ink);font-size:16px;margin-bottom:2px}
-.step p{margin:4px 0 0;font-size:15px;color:var(--soft)}
+details{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:14px 18px;margin:18px 0}
+details summary{cursor:pointer;font-weight:700;color:var(--ink)}
+details p{font-size:15px}
 </style>
 </head>
 <body>
@@ -46,104 +55,131 @@
 <section class="head">
   <p class="kicker">02 — Пояснення</p>
   <h1>Чому саме це число</h1>
-  <p class="lead">Модель не знає нічого про плани противника. Вона знає лише те,
-  що вже сталося до 12:00, і те, як така сама картина закінчувалась у минулому.</p>
+  <p class="lead">Коротка відповідь: це не здогад. Це частота — скільки діб
+  з останніх тридцяти закінчилися атакою.</p>
 </section>
 
-<h2>Що модель побачила</h2>
-<p>Це вхідні дані сьогоднішнього прогнозу — стан на момент відсічки:</p>
+<h2>Розрахунок</h2>
+<div class="calc">
+  <p class="eq" id="eq">завантаження…</p>
+  <p id="eq-note"></p>
+</div>
+<p>Тобто число на головній — це відповідь на питання «як часто таке ставалось
+останнім часом», а не «що противник зробить сьогодні». Модель, яка намагається
+вгадати саме сьогоднішній намір, у нас теж є — і поки що вона програє цій
+простій лічилці. Нижче показано, наскільки саме.</p>
+
+<h2>Словник</h2>
+<p class="small">Шість слів, які вживаються на всьому сайті. Усе, крім
+окремо позначеного, стосується <b>міста Києва</b>, а не області.</p>
+<div class="gloss">
+  <div><b>Доба нальоту</b><span>Проміжок з 12:00 до 12:00 наступного дня,
+    підписаний датою початку. Нічний наліт 22:00 → 05:00 — це одна подія;
+    календарна північ розрізала б її навпіл.</span></div>
+  <div><b>Атака</b><span>Над містом були цілі: супровід курсом на Київ, робота
+    ППО, влучання. Від одного дрона до масованого удару — усе це «атака».
+    Тривога без цілей атакою не рахується.</span></div>
+  <div><b>Масована атака</b><span>Доба, коли цілі були <i>і</i> тривоги
+    сумарно тривали <span id="g-min">8</span> годин та більше, або зафіксовано
+    <span id="g-trk">15</span>+ цілей курсом на місто.</span></div>
+  <div><b>Ціль курсом на Київ («трек»)</b><span>Одне повідомлення Повітряних Сил
+    про ціль, що йде на місто. Це <b>спостереження, а не кількість бортів</b>:
+    одне повідомлення може означати групу дронів.</span></div>
+  <div><b>Кліматологія</b><span>Слово з метеорології: «як зазвичай буває в цю
+    пору». У нас — частота події за останні 30 завершених діб. Саме вона
+    публікується як прогноз.</span></div>
+  <div><b>Похибка (Brier)</b><span>Наскільки названі відсотки відрізнялись від
+    того, що сталося: середній квадрат різниці. 0 — ідеально, 0.25 — рівень
+    «щодня кажу 50%». Менше — краще.</span></div>
+</div>
+
+<h2>Що модель бачила на момент відсічки</h2>
+<p>Це стан на 12:00, коли видавалось число. Нічого з поточної доби сюди не
+входить — інакше це був би не прогноз, а переказ уже відомого.</p>
 <div class="now" id="now"></div>
 
-<h3>Хвилини тривог за останні 30 діб</h3>
+<h3>Хвилини тривог у місті Києві, останні 30 діб</h3>
 <div class="spark" id="sp-min"></div>
 <div class="axis"><span id="sp-a"></span><span id="sp-b"></span></div>
 
-<h3>Дрон-треки на Київ за останні 30 діб</h3>
+<h3>Цілі курсом на Київ, останні 30 діб</h3>
 <div class="spark" id="sp-trk"></div>
-<p class="small">Трек — це зафіксоване спостереження цілі курсом на Київ,
-а не кількість бортів: одне повідомлення може означати цілу групу.</p>
+<p class="small">Стовпчик — одна доба нальоту. Це кількість повідомлень про цілі
+на місто, а не кількість збитих апаратів: таких даних по Києву не публікує ніхто.</p>
 
-<h2>Як із цього виходить відсоток</h2>
-<div class="steps">
-  <div class="step"><b>Беремо все, що відоме до 12:00</b>
-    <p>58 ознак: підсумки попередніх діб, ковзні середні за 3, 7, 14 і 30 діб,
-    довжина поточної серії, скільки минуло від сильної доби, календар і
-    тривалість темного часу. Нічого з поточного вікна — інакше це був би не
-    прогноз, а переказ уже відомого.</p></div>
-  <div class="step"><b>Кілька моделей рахують незалежно</b>
-    <p>Логістична регресія, беггінг дерев, випадковий ліс, kNN, дерево рішень,
-    бустинг, MLP. Склад не зафіксований: щодня відбираються найкращі за
-    крос-валідацією, і він міняється разом із даними. Скільки саме моделей
-    брати — теж вирішує валідація, а не тест.</p></div>
-  <div class="step"><b>Береться медіана, а не середнє</b>
-    <p>Одна модель, що з'їхала, тягне середнє за собою, а медіану — ні. На тесті
-    медіана п'яти виявилась кращою за будь-яку одиночну модель, обрану чесно за
-    валідацією.</p></div>
-  <div class="step"><b>Число публікується як є</b>
-    <p>Зараз публікується кліматологічна оцінка, бо на перевірці вона виявилась
-    кращою за модель. Без округлення до «високої / низької загрози» і без
-    ручного втручання.
-    Кожен виданий прогноз лягає в базу з часом видачі, і його вже не можна
-    переписати заднім числом.</p></div>
-</div>
+<h2>А що робить модель</h2>
+<p>Паралельно з кліматологією щодня рахується ансамбль машинного навчання: він
+бере 58 ознак (підсумки попередніх діб, ковзні середні за 3, 7, 14 і 30 діб,
+довжину поточної серії, календар, тривалість темного часу) і видає свій
+відсоток. Його <b>записують у базу, але не публікують</b>. Причина проста —
+на добах, яких він не бачив, він гірший за просту частоту:</p>
+<div class="scroll"><table>
+<thead><tr><th>Спосіб дати прогноз</th><th class="num">похибка Brier</th><th>як читати</th></tr></thead>
+<tbody>
+<tr class="win"><td><b>Частота за 30 діб</b> — те, що публікується</td><td class="num">0.2428</td><td>найкраще з перевіреного</td></tr>
+<tr><td>Ансамбль моделей</td><td class="num">0.2464</td><td>трохи гірше</td></tr>
+<tr><td>«Завжди середня частота»</td><td class="num">0.2519</td><td>прогноз без жодної інформації</td></tr>
+<tr><td>«Як учора, так і сьогодні»</td><td class="num">0.2571</td><td>найгірше</td></tr>
+</tbody></table></div>
+<p class="small">184 доби, яких модель не бачила (березень — вересень 2026).</p>
+<p>Різниця між першими двома рядками <b>статистично незначуща</b>: на 184 добах
+довірчий інтервал ширший за неї. Тому це не «модель погана, частота гарна», а
+«модель поки що не довела, що вона потрібна». Публікувати складніше за простіше
+без доведеної переваги — це самообман, тому публікується простіше.</p>
+<p>Одну річ модель усе-таки вміє: <b>впорядковувати доби за ризиком</b>
+(ROC-AUC 0.61 проти 0.50 у монети). Але з цього поки не виходять кращі
+ймовірності. Її щоденний вихід лежить у <a href="/dl/predictions.csv">predictions.csv</a>
+у колонці <code>members</code>, поле <code>ensemble_p</code> — щоб було видно той день, коли вона нарешті
+почне вигравати.</p>
 
-<h2>Які ознаки важать найбільше</h2>
-<p>Вага з випадкового лісу, навченого на всій поточній вибірці — перераховується
-разом із даними, не зафіксована в тексті. <b>Усі десять найсильніших</b> —
-інерція власного ряду:</p>
-<div class="bars" id="imp"></div>
-<blockquote>Читати це слід буквально: модель вивчила «як було останній
-тиждень-місяць, так і буде» — і саме тому просте ковзне середнє за 30 діб
-перемагає її. Це не вада реалізації, а властивість задачі.</blockquote>
+<details>
+  <summary>Склад ансамблю на сьогодні (для тих, кому це цікаво)</summary>
+  <p id="members">—</p>
+  <p class="small">Склад не зафіксований: щодня беруться п'ять моделей, найкращих
+  за крос-валідацією на навчальних добах, і з їхніх п'яти відповідей береться
+  медіана. Медіана, а не середнє: одна модель, що з'їхала, тягне середнє за
+  собою, а медіану — ні.</p>
+</details>
 
 <h2>Що ми перевіряли й що не спрацювало</h2>
-<p class="small">Частка діб з атакою в кожній групі, 916 діб 2024–2026.
-Базова частка по всій вибірці — <b>40.7%</b>.</p>
+<p class="small">Частка діб з атакою в кожній групі, 916 діб за 2024–2026.
+Середня частка по всій вибірці — <b>40.7%</b>.</p>
 <div class="scroll"><table>
 <thead><tr><th>Гіпотеза</th><th class="num">група</th><th class="num">частка атак</th><th>висновок</th></tr></thead>
 <tbody>
-<tr><td>Учора цілей не було</td><td class="num">578 діб</td><td class="num">34.1%</td><td rowspan="2"><b>працює</b> — розкид 36 пунктів</td></tr>
-<tr><td>Учора понад 5 цілей</td><td class="num">30 діб</td><td class="num">70.0%</td></tr>
-<tr><td>Тихо вночі (&lt;8 км/год)</td><td class="num">288 діб</td><td class="num">40.6%</td><td rowspan="2">слабко — 5 пунктів</td></tr>
-<tr><td>Сильний вітер (&gt;15)</td><td class="num">97 діб</td><td class="num">36.1%</td></tr>
-<tr><td>Довга ніч (&gt;12 год)</td><td class="num">398 діб</td><td class="num">45.7%</td><td rowspan="2">слабко — 13 пунктів</td></tr>
-<tr><td>Коротка ніч (&lt;9 год)</td><td class="num">245 діб</td><td class="num">32.2%</td></tr>
+<tr><td>Учора цілей на Київ не було</td><td class="num">578 діб</td><td class="num">34.1%</td><td rowspan="2"><b>працює</b> — розрив 36 пунктів</td></tr>
+<tr><td>Учора цілей було понад 5</td><td class="num">30 діб</td><td class="num">70.0%</td></tr>
+<tr><td>Довга ніч (понад 12 год темряви)</td><td class="num">398 діб</td><td class="num">45.7%</td><td rowspan="2">слабко — 13 пунктів</td></tr>
+<tr><td>Коротка ніч (менше 9 год)</td><td class="num">245 діб</td><td class="num">32.2%</td></tr>
+<tr><td>Тихо вночі (вітер менше 8 км/год)</td><td class="num">288 діб</td><td class="num">40.6%</td><td rowspan="2">ні — погода нічого не додає</td></tr>
+<tr><td>Сильний вітер (понад 15 км/год)</td><td class="num">97 діб</td><td class="num">36.1%</td></tr>
 <tr><td>МіГ-31К напередодні не злітав</td><td class="num">741 доба</td><td class="num">42.4%</td><td rowspan="2">ні — ефект у зворотний бік</td></tr>
 <tr><td>МіГ-31К напередодні злітав</td><td class="num">175 діб</td><td class="num">33.7%</td></tr>
 <tr><td>Українські свята</td><td class="num">35 діб</td><td class="num">42.9%</td><td rowspan="2">ні — вибірки замалі, різниця в межах шуму</td></tr>
 <tr><td>Російські свята</td><td class="num">30 діб</td><td class="num">33.3%</td></tr>
 </tbody></table></div>
-<p>Окремо: МіГ-31К <b>усередині того самого вікна</b> дає 0.29 ракетного треку
-проти 0.12 — тобто вдвічі більше. Сигнал реальний, але живе години, а не добу:
-для горизонту «сьогодні вночі» він марний, для контуру «удар у найближчі
-1–2 години» був би найсильнішим з наявних.</p>
+<p>Окремо про МіГ-31К. На добовому горизонті сигналу немає, але <b>всередині
+того самого вікна</b> зліт носія дає 0.29 ракетного треку проти 0.12 — удвічі
+більше. Сигнал реальний, просто живе години, а не добу: для прогнозу «сьогодні
+вночі» він марний, для контуру «удар у найближчі 1–2 години» був би
+найсильнішим з наявних.</p>
 
-<h2>Наскільки цьому можна вірити</h2>
-<p>Головна планка — не «завжди ні», а найпростіші оцінки: «як учора»
-(персистенція) і «як за останні 30 діб» (кліматологія). Ось що виходить на
-184 добах, яких модель не бачила:</p>
-<div class="scroll"><table>
-<thead><tr><th>Прогноз</th><th class="num">log-loss</th><th class="num">Brier</th><th class="num">ROC-AUC</th></tr></thead>
-<tbody>
-<tr class="win"><td><b>Кліматологія 30 діб</b> — те, що публікується</td><td class="num">0.6798</td><td class="num">0.2428</td><td class="num">0.570</td></tr>
-<tr><td>Модель (медіана ансамблю)</td><td class="num">0.6920</td><td class="num">0.2464</td><td class="num">0.606</td></tr>
-<tr><td>Константа (базова частка)</td><td class="num">0.6972</td><td class="num">0.2519</td><td class="num">0.500</td></tr>
-<tr><td>Персистенція («як учора»)</td><td class="num">0.7089</td><td class="num">0.2571</td><td class="num">0.512</td></tr>
-</tbody></table></div>
-<p><b>Модель не перевершує кліматологію, і саме тому на головній сторінці
-публікується кліматологічна оцінка, а не вихід моделі.</b> Жодна різниця в цій
-таблиці не є статистично значущою: на 184 добах довірчий інтервал ширший за
-будь-який із цих ефектів. На горизонті «завтра» модель значущо гірша за базові
-лінії, тому там теж публікується кліматологія.</p>
-<p>Модель уміє трохи ранжувати (ROC-AUC 0.606 проти 0.500 у монети), але це не
-перетворюється на кращі ймовірності. Її вихід далі щодня записується в базу
-поруч із опублікованим числом — щоб було видно, коли вона нарешті почне
-вигравати.</p>
+<h2>Які ознаки важать найбільше</h2>
+<p>Це ваги з випадкового лісу, навченого на всій наявній вибірці:
+наскільки часто модель спирається на ту чи іншу колонку. Перераховуються
+разом із даними, не зашиті в текст.</p>
+<div class="bars" id="imp"></div>
+<blockquote>Читати це слід буквально: <b>усі десять найсильніших ознак — це
+історія самого ряду</b>, тобто «як було останній тиждень-місяць, так і буде».
+Саме тому просте середнє за 30 діб її й перемагає: модель вивчила ту саму
+інерцію, тільки складнішим способом. Це не вада реалізації, а властивість
+задачі — зовнішніх ознак, які реально попереджають за добу, у відкритих даних
+поки не знайдено.</blockquote>
 
-<blockquote><b>Чого це число не означає.</b> 90% не значить «майже напевно
-вдарять по вашому будинку». Воно значить: у 100 таких самих за вхідними даними
-діб приблизно у 90 над містом були цілі — від одного дрона до масованої атаки.
-Різницю між цими сценаріями показує окреме число «масована атака».</blockquote>
+<blockquote><b>Чого це число не означає.</b> 80% не значить «майже напевно
+влучать у ваш будинок». Воно значить: із 100 діб, схожих на цю за вхідними
+даними, приблизно у 80 над містом були цілі — від одного дрона до масованого
+удару. Різницю між цими сценаріями показує окреме число «масована атака».</blockquote>
 
 <div class="foot">
   <div class="note">Розрахунок відтворюваний: код і дані відкриті, кожен виданий
@@ -153,9 +189,21 @@
 </main>
 
 <script>
+const PCT = p => Math.round(p * 100);
+const MONS = ['січня','лютого','березня','квітня','травня','червня','липня',
+              'серпня','вересня','жовтня','листопада','грудня'];
+const pl = (n, one, few, many) => {
+  const a = Math.abs(n) % 100, b = a % 10;
+  return n + ' ' + (a > 10 && a < 20 ? many : b === 1 ? one : b > 1 && b < 5 ? few : many);
+};
+const human = s => { const x = new Date(s + 'T00:00:00');
+  return x.getDate() + ' ' + MONS[x.getMonth()]; };
+
 fetch('/api/importances.json?t=' + Date.now(), {cache:'no-store'})
   .then(r => r.json()).then(IMP => {
-        box.innerHTML = IMP.map(([t, v]) =>
+    const box = document.getElementById('imp');
+    const mx = Math.max(...IMP.map(x => x[1]));
+    box.innerHTML = IMP.map(([t, v]) =>
       '<div class="row"><div class="t">' + t + '</div>' +
       '<div class="g"><i style="width:' + (v / mx * 100).toFixed(1) + '%"></i></div>' +
       '<div class="v">' + v.toFixed(3) + '</div></div>').join('');
@@ -169,20 +217,46 @@ function spark(id, vals){
 }
 
 fetch('/api/latest.json?t=' + Date.now(), {cache:'no-store'}).then(r => r.json()).then(D => {
+  const c = D.today || D.tomorrow;
+  document.getElementById('g-min').textContent = D.thresholds.massive_minutes / 60;
+  document.getElementById('g-trk').textContent = D.thresholds.massive_tracks;
+
+  /* Той самий дріб, з якого модель узяла число: чисельник і знаменник
+     приходять з бекенду, а не рахуються тут — щоб сторінка не могла
+     розійтися з опублікованим прогнозом. */
+  if(c && c.explain && c.explain.attacked){
+    const e = c.explain.attacked;
+    document.getElementById('eq').innerHTML =
+      pl(e.k, 'доба', 'доби', 'діб') + ' з атакою &divide; ' +
+      pl(e.n, 'остання завершена доба', 'останні завершені доби', 'останніх завершених діб') +
+      ' = <b>' + PCT(c.p_attack) + '%</b>';
+    document.getElementById('eq-note').innerHTML =
+      'Вікно закінчується ' + human(c.explain.last_day) + ' — це остання доба, підсумки ' +
+      'якої були відомі о 12:00, коли видавалось число на добу ' + human(c.raid_day) + '. ' +
+      (c.explain.ensemble_p != null
+        ? 'Ансамбль моделей того ж дня дав ' + PCT(c.explain.ensemble_p) +
+          '% — його порахували, записали в базу, але не опублікували.'
+        : '');
+    document.getElementById('members').textContent =
+      (c.explain.members || []).join(', ') || '—';
+  }
+
   const h = D.history.filter(r => r.attacked !== null).slice(0, 30).reverse();
   spark('sp-min', h.map(r => r.alert_minutes));
-  spark('sp-trk', h.map(r => r.drone_tracks));
+  spark('sp-trk', h.map(r => r.drone_tracks + r.missile_tracks));
   if(h.length){
     document.getElementById('sp-a').textContent = h[0].raid_day;
     document.getElementById('sp-b').textContent = h[h.length - 1].raid_day;
   }
   const last = h[h.length - 1] || {};
   const atk7 = h.slice(-7).filter(r => r.attacked).length;
+  const mass30 = h.filter(r => r.massive).length;
   document.getElementById('now').innerHTML = [
-    ['Учора тривог', (last.alert_minutes ?? 0) + ' хв'],
-    ['Учора дрон-треків', last.drone_tracks ?? 0],
-    ['Атак за 7 діб', atk7 + ' з 7'],
-    ['Навчено на добах', (D.today && D.today.n_train) || '—'],
+    ['Тривог за минулу добу', (last.alert_minutes ?? 0) + ' хв'],
+    ['Цілей на Київ за минулу добу', (last.drone_tracks ?? 0) + (last.missile_tracks ?? 0)],
+    ['Атак за останні 7 діб', atk7 + ' з 7'],
+    ['Масованих за 30 діб', mass30 + ' з ' + h.length],
+    ['Діб у навчальній вибірці', (c && c.n_train) || '—'],
   ].map(([k, v]) => '<div><p class="k">' + k + '</p><p class="v">' + v + '</p></div>').join('');
 });
 </script>

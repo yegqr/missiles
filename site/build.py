@@ -21,6 +21,11 @@ OUT = os.path.dirname(os.path.abspath(__file__))
 
 KYIV = ZoneInfo("Europe/Kyiv")
 
+# Ті самі числа, що в ml/dataset.py і в db/migrations/016_massive.sql.
+# Сторінка мусить називати їх уголос: «масована» без порога — порожнє слово.
+MASSIVE_MINUTES = 480
+MASSIVE_TRACKS = 15
+
 
 def kyiv_now():
     """Справжня зона, не зсув: наприкінці жовтня Київ переходить на UTC+2,
@@ -51,17 +56,45 @@ def main():
             FROM predictions
             ORDER BY raid_day, target, horizon,
                      starts_with(model, 'backtest') ASC, issued_at DESC""")
+        # massive / alert30 беруться тим самим виразом, що й уv_prediction_scores
+        # і в ml/dataset.py. Три копії порогів у трьох місцях розходяться
+        # мовчки, тому означення живе в SQL, а сторінка його лише показує.
         hist = fetch(c, """
-            SELECT raid_day, y_attacked, y_alert_minutes, y_drone_tracks, y_missile_tracks
+            SELECT raid_day, y_attacked, y_alert_minutes,
+                   y_drone_tracks, y_missile_tracks,
+                   y_alert_minutes >= 30 AS alert30,
+                   (y_drone_tracks + y_missile_tracks) > 0
+                     AND (y_alert_minutes >= %s OR y_drone_tracks >= %s) AS massive
             FROM v_daily_features
             WHERE raid_day <= %s AND raid_day >= %s
-            ORDER BY raid_day DESC""", (today, today - timedelta(days=400)))
+            ORDER BY raid_day DESC""",
+            (MASSIVE_MINUTES, MASSIVE_TRACKS, today, today - timedelta(days=400)))
         scores = fetch(c, """
-            SELECT horizon, target, count(*) n, avg(brier) brier
+            SELECT horizon, target, count(*) n, avg(brier) brier,
+                   count(*) FILTER (WHERE live) n_live
             FROM v_prediction_scores GROUP BY 1,2 ORDER BY 1,2""")
         cov = fetch(c, "SELECT * FROM v_coverage")
 
     by_key = {(p["raid_day"], p["target"], p["horizon"]): p for p in preds}
+    fact = {h["raid_day"]: h for h in hist}
+
+    def share(end_day, days, key):
+        """Частка діб з подією у вікні, що закінчується end_day включно.
+
+        Це і є «кліматологія»: рівно те, що публікується як прогноз. Повертаємо
+        не лише відсоток, а чисельник і знаменник — щоб сторінка могла сказати
+        «24 доби з 30», а не просити вірити числу 80%."""
+        k = n = 0
+        d = end_day
+        while n < days and d in fact:
+            v = fact[d][key]
+            if v is not None:
+                n += 1
+                k += bool(v)
+            d -= timedelta(days=1)
+        return {"k": k, "n": n, "p": round(k / n, 4) if n else None} if n else None
+
+    KEY = {"attacked": "y_attacked", "massive": "massive", "alert30": "alert30"}
 
     def card(day, horizon):
         p = by_key.get((day, "attacked", horizon))
@@ -69,6 +102,10 @@ def main():
             return None
         mass = by_key.get((day, "massive", horizon))
         alert = by_key.get((day, "alert30", horizon))
+        meta = p["members"] or {}
+        # Останні 30 завершених діб на момент відсічки. Горизонт «завтра»
+        # бачить на добу менше: доба між сьогодні й завтра ще триває.
+        last = day - timedelta(days=horizon)
         return {
             "raid_day": day.isoformat(),
             "horizon": horizon,
@@ -80,6 +117,15 @@ def main():
             "model": p["model"],
             "n_train": p["n_train"],
             "members": p["members"],
+            # звідки взялося кожне з трьох чисел, у штуках діб
+            "explain": {
+                "last_day": last.isoformat(),
+                "attacked": share(last, 30, "y_attacked"),
+                "massive": share(last, 30, "massive"),
+                "alert30": share(last, 30, "alert30"),
+                "ensemble_p": meta.get("ensemble_p"),
+                "members": sorted((meta.get("members") or {}).keys()),
+            },
         }
 
     # факт по добах + який прогноз на них видавався
@@ -89,31 +135,42 @@ def main():
         done = d < today
         rows.append({
             "raid_day": d.isoformat(),
-            "attacked": bool(h["y_attacked"]) if done else None,
+            # доба нальоту з датою today триває до 12:00 наступного дня:
+            # її підсумки неповні, і «атаки не було» про неї казати не можна
+            "in_progress": not done,
+            "attacked": bool(h["y_attacked"]) if done and h["y_attacked"] is not None else None,
             "alert_minutes": int(h["y_alert_minutes"] or 0),
             "drone_tracks": int(h["y_drone_tracks"] or 0),
             "missile_tracks": int(h["y_missile_tracks"] or 0),
-            # масована = 8+ годин під тривогою або надзвичайно щільний супровід
-            "massive": done and bool(
-                (int(h["y_drone_tracks"] or 0) + int(h["y_missile_tracks"] or 0)) > 0
-                and (int(h["y_alert_minutes"] or 0) >= 480
-                     or int(h["y_drone_tracks"] or 0) >= 15)),
+            "alert30": bool(h["alert30"]) if done else None,
+            "massive": bool(h["massive"]) if done else None,
             "p_today": (lambda x: round(num(x["p"]), 4) if x else None)(
                 by_key.get((d, "attacked", 1))),
             "p_tomorrow": (lambda x: round(num(x["p"]), 4) if x else None)(
                 by_key.get((d, "attacked", 2))),
+            "p_massive": (lambda x: round(num(x["p"]), 4) if x else None)(
+                by_key.get((d, "massive", 1))),
             # true = пораховано заднім числом, false = виданий наживо
             "backtest": (lambda x: x["model"].startswith("backtest") if x else None)(
                 by_key.get((d, "attacked", 1)) or by_key.get((d, "attacked", 2))),
         })
 
+    last_done = today - timedelta(days=1)
     data = {
         "generated_at": now.isoformat(),
+        "current_raid_day": today.isoformat(),
+        "thresholds": {"massive_minutes": MASSIVE_MINUTES,
+                       "massive_tracks": MASSIVE_TRACKS, "alert30_minutes": 30},
         "today": card(today, 1),
         "tomorrow": card(today + timedelta(days=1), 2),
+        # звичайний рівень, з яким порівнюється сьогоднішнє число
+        "rates": {"d30": share(last_done, 30, "y_attacked"),
+                  "d365": share(last_done, 365, "y_attacked"),
+                  "massive_d365": share(last_done, 365, "massive")},
         "history": rows,
-        "scores": [{"horizon": s["horizon"], "target": s["target"],
-                    "n": s["n"], "brier": round(num(s["brier"]), 4)} for s in scores],
+        "scores": [{"horizon": s["horizon"], "target": s["target"], "n": s["n"],
+                    "n_live": s["n_live"], "brier": round(num(s["brier"]), 4)}
+                   for s in scores],
         "coverage": [{k: (v.isoformat() if hasattr(v, "isoformat") else num(v))
                       for k, v in row.items()} for row in cov],
     }

@@ -4,13 +4,20 @@ from final import prepare
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.ensemble import RandomForestClassifier
-NAMES = {"y_drone_tracks":"дрон-треки","y_alert_minutes":"хвилини тривог",
-         "y_attacked_i":"факт атаки","y_missile_tracks":"ракетні треки"}
+# Порядок важливий: y_drone_tracks_obl починається з y_drone_tracks, і при
+# короткому збігу цілі над ОБЛАСТЮ підписувались як цілі на місто — на графіку
+# виходили два однакові рядки з різними вагами.
+NAMES = {"y_drone_tracks_obl":"цілі над Київщиною",
+         "y_missile_tracks_obl":"ракетні цілі над Київщиною",
+         "y_drone_tracks":"цілі курсом на Київ",
+         "y_missile_tracks":"ракетні цілі на Київ",
+         "y_alert_minutes":"хвилини тривог у місті",
+         "y_attacked_i":"факт атаки на місто"}
 SUF = {"_l1":"учора","_l2":"позавчора","_l3":"три доби тому","_m3":"середнє за 3 доби",
        "_m7":"середнє за 7 діб","_m14":"середнє за 14 діб","_m30":"середнє за 30 діб",
        "_sd7":"розкид за 7 діб","_max7":"максимум за 7 діб","_ewm":"згладжена історія"}
 def human(c):
-    for b, n in NAMES.items():
+    for b, n in sorted(NAMES.items(), key=lambda kv: -len(kv[0])):
         if c.startswith(b):
             for sf, sn in SUF.items():
                 if c.endswith(sf): return f"{n}: {sn}"
