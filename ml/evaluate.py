@@ -90,7 +90,11 @@ def run(lag: int, label: str, target: str):
     # --- рішення приймаються ТУТ, на train_val ---
     _, models_v, _ = fit_ensemble(trf, feats, target)
     best, choice = None, None
-    for k in (1, 3, 5, 7):
+    # K=1 виключено: це вже не ансамбль, а одна модель, обрана за CV — саме
+    # той спосіб відбору, який на цих даних не переноситься на майбутнє
+    # (Spearman між рейтингом CV і тестом ≈ 0.2). На горизонті «завтра»
+    # валідація обрала K=1, і log-loss на тесті вийшов 1.77 при базовій 0.72.
+    for k in (3, 5, 7):
         if k > len(models_v):
             continue
         for shift_on in (False, True):
@@ -128,7 +132,8 @@ def run(lag: int, label: str, target: str):
             "горизонт": label, "ціль": target, "оцінка": name,
             "log_loss": log_loss(y, pc), "brier": brier_score_loss(y, pc),
             "roc_auc": roc_auc_score(y, pc) if len(np.unique(y)) > 1 else np.nan,
-            "різниця_до_кліматології": diff, "ді_низ": lo, "ді_верх": hi,
+            "різниця_до_бази": diff, "база": publish if publish != "модель" else "кліматологія 30",
+            "ді_низ": lo, "ді_верх": hi,
             "значущо": not (lo <= 0 <= hi),
         })
     meta = {"k": k, "корекція_частки": shift_on, "публікувати": publish,

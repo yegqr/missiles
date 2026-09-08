@@ -16,9 +16,13 @@ DB = os.environ.get("DATABASE_URL", "postgresql://missiles:missiles@127.0.0.1:55
 TRAIN_START = "2024-01-01"
 
 # Ряди, з яких будуються історичні вікна
-HIST = ["y_attacked_i", "y_alert_minutes", "y_drone_tracks", "y_missile_tracks"]
+HIST = ["y_attacked_i", "y_alert_minutes", "y_drone_tracks", "y_missile_tracks",
+        # цілі над областю: не лейбл, але відомі до відсічки й географічно
+        # ближчі до міста, ніж національні числа
+        "y_drone_tracks_obl"]
 
 BLOCK_A = ["alerts_prev", "alert_minutes_prev", "drone_tracks_prev", "missile_tracks_prev",
+           "drone_tracks_obl_prev", "missile_tracks_obl_prev",
            "drones_launched_ua_prev", "mig31k_prev", "strategic_prev", "kalibr_prev"]
 BLOCK_C = ["dow_sin", "dow_cos", "month_sin", "month_cos", "night_hours",
            "heating_season", "holiday_ua_w", "holiday_ru_w"]
