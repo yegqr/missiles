@@ -34,6 +34,7 @@ warnings.filterwarnings("ignore")
 RS = 0
 TARGET = "y_attacked_i"
 CLIP = (0.02, 0.98)
+CLIM_WINDOWS = (7, 14, 30, 60, 90)
 
 
 def models():
@@ -63,6 +64,12 @@ def models():
 def walk_forward(d, feats, start, refit):
     """Повертає DataFrame: доба, факт і колонка ймовірностей на кандидата."""
     d = d[d.y_known].reset_index(drop=True)
+    # Кліматології різної довжини. Рахуються ПІСЛЯ відсіву непозначених діб —
+    # рівно так, як їх рахує ml/final.prepare, інакше кандидат «кліматологія 30»
+    # у бейк-офі означав би не те, що публікується.
+    for w in CLIM_WINDOWS:
+        d[f"clim{w}"] = (d[TARGET].shift(1)
+                         .rolling(w, min_periods=max(5, w // 3)).mean())
     test_idx = d.index[d.raid_day >= start]
     if not len(test_idx):
         raise SystemExit(f"немає тестових діб з {start}")
@@ -77,10 +84,9 @@ def walk_forward(d, feats, start, refit):
         out = {"raid_day": te.raid_day.values, "y": te[TARGET].values}
         prior = tr[TARGET].mean()
         # кліматології різної довжини рахуються з уже зсунутих колонок
-        for w in (14, 30, 60, 90):
-            col = f"{TARGET}_m{w}"
+        for w in CLIM_WINDOWS:
             out[f"кліматологія {w}"] = np.clip(
-                np.nan_to_num(te[col].values, nan=prior), *CLIP)
+                np.nan_to_num(te[f"clim{w}"].values, nan=prior), *CLIP)
         P = []
         for name, m in models().items():
             m.fit(tr[feats], tr[TARGET].values)

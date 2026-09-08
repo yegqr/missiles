@@ -77,6 +77,13 @@ a{color:inherit}
 .window .val b{color:var(--pink)}
 .window .sub{font-size:12.5px;color:var(--soft)}
 
+/* Число ML показується поруч із опублікованим, а не ховається в тексті
+   пояснення: «а де тут машинне навчання» — перше питання, яке виникає. */
+.shadow{margin:14px 0 0;font-size:13.5px;color:var(--soft);max-width:52ch;
+  text-align:center}
+.shadow b{color:var(--ink);font-variant-numeric:tabular-nums}
+.shadow a{color:var(--pink);font-weight:700}
+
 /* ── три плитки, клікабельні ───────────────────────────────────────── */
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
   width:100%;max-width:660px;margin:26px auto 0}
@@ -236,6 +243,7 @@ td.p{font-weight:700;color:var(--ink)}
       <span class="val" id="win">завантаження…</span>
       <span class="sub" id="win-sub"></span>
     </div>
+    <p class="shadow" id="shadow"></p>
 
     <div class="stats">
       <button class="stat" id="t-mass" aria-expanded="false">
@@ -373,6 +381,11 @@ function render(){
     'модель бачила все, що сталося до 12:00 ' +
     human(c.explain.last_day).split(', ')[1] + '; число видано ' +
     kyivDate(c.issued_at).replace('.', '') + ' о ' + kyivTime(c.issued_at) + ' за Києвом';
+  const ml = c.explain && c.explain.ensemble_p;
+  document.getElementById('shadow').innerHTML = ml == null ? '' :
+    'Ансамбль машинного навчання сьогодні дав <b>' + PCT(ml) + '%</b>. ' +
+    'Публікується не він, а частота за 30 діб — на перевірці ML програв їй. ' +
+    '<a href="/why.html">Чому саме так →</a>';
   if(openTile) fillExp(openTile);
 }
 
