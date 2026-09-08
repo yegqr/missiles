@@ -18,7 +18,6 @@
 
 Запуск:  .venv/bin/python ingest/export_release.py [--with-messages]
 """
-import gzip
 import hashlib
 import json
 import os
@@ -129,7 +128,12 @@ def jsonable(v):
 
 def dump(conn, name, sql, date_col, parser, doc):
     import csv
-    path = os.path.join(OUT, f"{name}.csv.gz")
+    # Некстиснуто, і це навмисно. Файли ростуть дописуванням у хвіст, а git
+    # уміє зберігати дельту текстового файла. Gzip щоразу дає новий несхожий
+    # blob: два пуші на добу по 1.9 МБ — це понад гігабайт на рік у пакфайлі
+    # рівно ні за що. Розпакованим воно займає більше на диску й у рази менше
+    # в історії.
+    path = os.path.join(OUT, f"{name}.csv")
     cur = conn.execute(sql)
     cols = [d[0] for d in cur.description]
     rows = 0
@@ -139,7 +143,7 @@ def dump(conn, name, sql, date_col, parser, doc):
     # секундами, і другий прохід подвоював час експорту рівно ні за що.
     di = cols.index(date_col) if date_col in cols else None
     lo = hi = None
-    with gzip.open(path, "wt", newline="", encoding="utf-8") as f:
+    with open(path, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(cols)
         while True:

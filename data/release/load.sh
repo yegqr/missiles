@@ -15,25 +15,24 @@ psql -f schema.sql
 
 echo "2/3 довідники"
 for t in regions alert_sources tg_channels weather_locations; do
-    f=$(ls 00_${t}.csv.gz)
     echo "   $t"
-    gunzip -c "$f" | psql -c "\copy $t FROM STDIN WITH (FORMAT csv, HEADER true)"
+    psql -c "\copy $t FROM '00_${t}.csv' WITH (FORMAT csv, HEADER true)"
 done
 
 echo "3/3 дані"
 declare -A FILES=(
-    [alerts]=10_alerts.csv.gz
-    [attack_observations]=11_attack_observations.csv.gz
-    [readiness_signals]=12_readiness_signals.csv.gz
-    [weather_hourly]=13_weather_hourly.csv.gz
-    [weather_forecast]=14_weather_forecast.csv.gz
-    [calendar_days]=15_calendar_days.csv.gz
-    [predictions]=31_predictions.csv.gz
+    [alerts]=10_alerts.csv
+    [attack_observations]=11_attack_observations.csv
+    [readiness_signals]=12_readiness_signals.csv
+    [weather_hourly]=13_weather_hourly.csv
+    [weather_forecast]=14_weather_forecast.csv
+    [calendar_days]=15_calendar_days.csv
+    [predictions]=31_predictions.csv
 )
 for t in "${!FILES[@]}"; do
     [ -f "${FILES[$t]}" ] || { echo "   $t — файлу немає, пропущено"; continue; }
     echo "   $t"
-    gunzip -c "${FILES[$t]}" | psql -c "\copy $t FROM STDIN WITH (FORMAT csv, HEADER true)"
+    psql -c "\copy $t FROM '${FILES[$t]}' WITH (FORMAT csv, HEADER true)"
 done
 
 echo

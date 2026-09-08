@@ -1,0 +1,12 @@
+Дані в цьому каталозі — CC BY 4.0 (Creative Commons Attribution 4.0
+International). https://creativecommons.org/licenses/by/4.0/deed.uk
+
+Вільно використовувати, змінювати й поширювати, зокрема комерційно, за умови
+посилання на джерело: https://github.com/yegqr/missiles
+
+Дані зібрані з відкритих первинних джерел:
+  * реєстр тривог КМДА (kyiv.digital)
+  * канали @air_alert_ua і @kpszsu у Telegram
+  * Open-Meteo (ERA5 та прогноз), CC BY 4.0
+
+Код парсерів і моделі — MIT, див. LICENSE у корені репозиторію.

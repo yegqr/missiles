@@ -16,4 +16,4 @@ site/dl/*.csv
 ml/results_[!f]*.csv
 
 # Сирі повідомлення каналів (168 МБ) — віддаються окремим релізом, не в git
-data/release/90_tg_messages.csv.gz
+data/release/90_tg_messages.csv

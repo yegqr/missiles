@@ -4,7 +4,7 @@
 оновлюється сама. Фундамент під модель прогнозування обстрілів.
 
 **Дані одним каталогом**
-- [`data/release`](data/release/README.md) — увесь набір у CSV.gz, по шарах,
+- [`data/release`](data/release/README.md) — увесь набір у CSV, по шарах,
   з паспортом кожного файла (`manifest.json`), реальним DDL (`schema.sql`) і
   скриптом `load.sh`, який піднімає з нього базу з нуля
 - [`docs/SCHEMA.md`](docs/SCHEMA.md) — що означає кожна колонка і де граблі

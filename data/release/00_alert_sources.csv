@@ -1,0 +1,6 @@
+code,priority,note
+kyiv_digital,0,"реєстр КМДА «Київ Цифровий», офіційний, тільки м. Київ"
+tg_air_alert_ua,1,наш парсер каналу @air_alert_ua — первинне джерело
+alerts_in_ua,2,"лайв-API, якщо є токен"
+official,3,"готовий датасет Vadimkin, офіційний канал"
+volunteer,4,"готовий датасет Vadimkin, eTryvoga; єдине джерело до 15.03.2022"

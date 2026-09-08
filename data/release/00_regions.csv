@@ -1,0 +1,10 @@
+id,code,name_uk,name_en,level,parent_id,alerts_in_ua_uid,lat,lon,is_tracked,created_at
+1,kyiv_city,м. Київ,Kyiv,oblast,,31,50.4501,30.5234,True,2026-09-07T16:25:37.255888+00:00
+2,kyiv_oblast,Київська область,Kyiv Oblast,oblast,,14,50.05,30.5,True,2026-09-07T16:25:37.255888+00:00
+3,kyiv_obl_vyshhorod,Вишгородський район,Vyshhorod Raion,raion,2,,50.585,30.487,True,2026-09-07T16:25:37.255888+00:00
+4,kyiv_obl_brovary,Броварський район,Brovary Raion,raion,2,,50.511,30.79,True,2026-09-07T16:25:37.255888+00:00
+5,kyiv_obl_boryspil,Бориспільський район,Boryspil Raion,raion,2,,50.353,30.955,True,2026-09-07T16:25:37.255888+00:00
+6,kyiv_obl_obukhiv,Обухівський район,Obukhiv Raion,raion,2,,50.107,30.622,True,2026-09-07T16:25:37.255888+00:00
+7,kyiv_obl_bucha,Бучанський район,Bucha Raion,raion,2,,50.545,30.212,True,2026-09-07T16:25:37.255888+00:00
+8,kyiv_obl_fastiv,Фастівський район,Fastiv Raion,raion,2,,50.075,29.918,True,2026-09-07T16:25:37.255888+00:00
+9,kyiv_obl_bila_tserkva,Білоцерківський район,Bila Tserkva Raion,raion,2,,49.796,30.115,True,2026-09-07T16:25:37.255888+00:00

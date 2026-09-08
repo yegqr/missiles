@@ -5,7 +5,11 @@
 рахується модель на [airalert.mylovanov.media](https://airalert.mylovanov.media)
 — не витяг і не спрощення.
 
-Оновлюється разом із базою: `.venv/bin/python ingest/export_release.py`.
+Оновлюється автоматично двічі на добу: о 06:00 (факти за ніч) і о 12:20 за
+Києвом (свіжий прогноз). Вручну — `.venv/bin/python ingest/export_release.py`.
+
+Файли навмисно **не стиснуті**: вони ростуть дописуванням у хвіст, і git
+зберігає дельту. Gzip щоразу давав би несхожий blob і гігабайти історії ні за що.
 
 ---
 
@@ -43,12 +47,12 @@ docker compose up -d          # Postgres 16 на 127.0.0.1:5543
 
 ## Як просто подивитись числа
 
-Розпакувати й читати. Усе — CSV з заголовком, UTF-8, кома, час в ISO 8601.
+Просто читати. Усе — CSV з заголовком, UTF-8, кома, час в ISO 8601.
 
 ```python
 import pandas as pd
-d = pd.read_csv("30_daily_features.csv.gz")        # навчальна таблиця
-a = pd.read_csv("21_alerts_daily.csv.gz")
+d = pd.read_csv("30_daily_features.csv")        # навчальна таблиця
+a = pd.read_csv("21_alerts_daily.csv")
 a = a[a.region_code == "kyiv_city"]                # ТІЛЬКИ місто
 ```
 
