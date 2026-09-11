@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict hhvtQyKSDHpFQaWcjkR8pgZ8FAhSAAeTcaZkXDLNwQUBDB1Ms9SLDypdhlcCBkb
+\restrict mg8cel5iQU1xGewlqrOd1iVass8GVSXXnipbjaYoKYZbqtzm9PbABzZPbtWLxm6
 
 -- Dumped from database version 16.14
 -- Dumped by pg_dump version 16.14
@@ -1766,5 +1766,5 @@ ALTER TABLE ONLY public.weather_hourly
 -- PostgreSQL database dump complete
 --
 
-\unrestrict hhvtQyKSDHpFQaWcjkR8pgZ8FAhSAAeTcaZkXDLNwQUBDB1Ms9SLDypdhlcCBkb
+\unrestrict mg8cel5iQU1xGewlqrOd1iVass8GVSXXnipbjaYoKYZbqtzm9PbABzZPbtWLxm6
 
